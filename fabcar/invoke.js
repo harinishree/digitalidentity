@@ -29,7 +29,7 @@ var targets = [];
 var tx_id = null;
 
 function createUser(params) {
-    var UserDetails;
+    var TransactionDetails;
 
     Promise.resolve().then(() => {
         console.log("Create a client and set the wallet location");
@@ -54,8 +54,7 @@ function createUser(params) {
         return;
     }).then(() => {
         TransactionDetails = params.TransactionDetails;
-        console.log("userId123...>>>>",TransactionDetails.userId)
-
+        console.log("userId123...>>>>",TransactionDetails.rapidID)
         var str = JSON.stringify(TransactionDetails.transactionstring)
         console.log("line number  58---->", str);
         tx_id = client.newTransactionID();
@@ -67,7 +66,7 @@ function createUser(params) {
             targets: targets,
             chaincodeId: options.chaincode_id,
             fcn: 'createUser',
-            args: [UserDetails.rapidID],
+            args: [TransactionDetails.rapidID,str],
             chainId: options.channel_id,
             txId: tx_id
         };

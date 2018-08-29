@@ -8,21 +8,20 @@ const users = 'risabh.s';
 exports.registerUser = (email, password, rapidID,userObject,usertype) =>
 
     new Promise((resolve, reject) => {
-
-        const newUser = new user({
-
-         
+        var transactionString = {
             email: email,
             password: password,
-            rapidID: rapidID,
             userObject:userObject,
              usertype :usertype,
             created_at: new Date(),
+        }
+
+        const newUser = new user({
+            rapidID: rapidID,
+            transactionString:transactionString 
         });
+        
         newUser.save()
-
-
-
 
             .then(() => resolve({
                 status: 201,
@@ -30,8 +29,7 @@ exports.registerUser = (email, password, rapidID,userObject,usertype) =>
             }))
 
             .then(() => bcSdk.createUser({
-                user: users,
-                UserDetails: newUser
+                TransactionDetails: newUser
             }))
 
             .catch(err => {
