@@ -1,262 +1,162 @@
 'use strict';
-
-const creditscore = require('./functions/creditscore');
-const login = require('./functions/login');
-const registerUser = require('./functions/registerUser');
-const loan = require('./functions/loan');
-const getloandetails = require('./functions/getloandetails');
-const getdetailsuser = require('./functions/getdetailsuser');
-const getparticulardetails = require('./functions/getparticulardetails');
-const getHistory = require('./functions/getHistory');
-const readRequest = require('./functions/readRequest');
-const preclosing = require('./functions/preclosing');
-const loanschedule = require('./functions/loanschedule');
-const getloanschedule = require('./functions/getloanschedule');
-const approveloan = require('./functions/approveloan');
-const updatetransaction = require('./functions/updatetransaction');
-const savetransaction = require('./functions/savetransaction');
-const register = require('./models/register');
-const readIndex = require('./functions/readIndex');
-
+var crypto = require('crypto');
 var cors = require('cors');
-var mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+var fs = require('fs');
 
-var Promises = require('promise');
-var cloudinary = require('cloudinary').v2;
-var multipart = require('connect-multiparty');
-var multipartMiddleware = multipart();
+const auditUser = require('./functions/auditUser');
 
-var Photo = require('./models/document');
-var path = require('path');
-
-
+const getMongoDocs = require('./functions/getMongoDocs');
+const approvedReject = require('./functions/approvedReject');
+const requestDocs = require('./functions/requestDocs');
+const register = require('./functions/register');
+const doc = require('./functions/addDoc');
+const fetchRequests = require('./functions/fetchRequests');
+const registerOrg = require('./functions/registerorg');
+const login = require('./functions/login');
+const profile = require('./functions/profile');
+const password = require('./functions/password');
+const config = require('./config/config.json');
+const user = require('./models/user');
+const fetchUsersdocs = require('./functions/fetchUserdocs');
+const shareDocument = require('./functions/sharedocument');
+const revokeAccess = require('./functions/revokeAccess');
+const getSharedDocs = require('./functions/getSharedDocs');
+const removedocs = require('./functions/removedocs');
 
 module.exports = router => {
 
-   router.post('/creditscore', cors(), (req, res) => {
-
-        console.log("credit....>>>",req.body);
-        console.log("entering register function in functions ");
-        const requestid = parseInt(req.body.records);
-        console.log(requestid);
-       
+    router.get('/', (req, res) => res.send("Welcome to digital identity !"));
 
 
-        creditscore
-            .creditscore(requestid)
-            .then(result => {
+    router.get('/rapidID', cors(), (req, res) => {
+        const rapidID = getrapidID(req);
+        res.send({
+            "rapidId": rapidID
+        })
 
-                console.log("res123----",result);
-                res.status(result.status).json({
-                    message: "credit score generated ",
-                    creditscore: result.creditscore
-
-
-                });
-
-            })
-            .catch(err => res.status(err.status).json({
-                message: err.message
-            }).json({
-                status: err.status
-            }));
-
-    }); 
+    });
 
 
-    router.post('/registerUser', cors(), (req, res) => { 
 
-        const firstname = req.body.firstname;
-        console.log(firstname);
-        const lastname = req.body.lastname;
-        console.log(lastname);
-        const phonenumber = parseInt(req.body.phonenumber);
-        console.log(phonenumber);
-        const dateofbirth = req.body.dateofbirth;
-        console.log(dateofbirth);
+    router.post('/login', cors(), (req, res) => {
+
         const email = req.body.email;
-        console.log(email);
+
         const password = req.body.password;
-        console.log(password);
-        const retypepassword = req.body.retypepassword;
-        console.log(retypepassword);
-        const usertype = req.body.usertype;
-        console.log(usertype);
-        var  userId = "";
-        var possible = "0123456789674736728367382772898366377267489457636736273448732432642326734"
-        for (var i = 0; i < 3; i++)
-            userId += (possible.charAt(Math.floor(Math.random() * possible.length))).toString();
-        console.log("userId" + userId)
 
 
-        if (!firstname || !lastname || !phonenumber|| !dateofbirth || !email || !password || !retypepassword || !usertype || !userId) {
+        if (!email) {
 
-            res
-                .status(400)
-                .json({
-                    message: 'Invalid Request !'
-                });
+            res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
 
         } else {
 
-            registerUser
-                .registerUser(firstname, lastname, phonenumber,dateofbirth,email,password, retypepassword,usertype,userId)
-                .then(result => {
+            login.loginUser(email, password)
 
-                    res.send({
-                        "message": "user has been registered successfully",
-                        "status": true,
+            .then(result => {
 
 
+
+         //      if ('orgname' in result.users._doc) {
+
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 60000
+                    })
+
+
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                       userObject:result.users[0]
                     });
 
+               /* } else {
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 600000000000
+                    })
 
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                         rapidID : result.users.rapidID,
+                        usertype: "ind",
+                        username: result.users.firstname
+                    });
+                }*/
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+        }
+    });
+      
+     router.get('/getMongodocs',(req,res)=>{
+                   
+                 if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+                const rapidID = getrapidID(req)
+
+                if (!rapidID) {
+            console.log(" invalid body ")
+            return res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        }
+                    getMongoDocs.getMongoDocs(rapidID)
+                    .then(result=>{
+                       res.status(result.status).json({
+                        docs: result.docs
+                    })
                 })
+                
                 .catch(err => res.status(err.status).json({
                     message: err.message
                 }).json({
                     status: err.status
                 }));
-        }
+            
+        
     });
-
-    router.post('/login', cors(), (req, res) => {
-        console.log("entering login function in functions ");
-        const emailid = req.body.email;
-        console.log(emailid);
-        const passwordid = req.body.password;
-        console.log(passwordid);
-       
-       
-        login
-            .loginUser(emailid, passwordid)
-            .then(result => {   
-                console.log("result ===>>>",result.users.usertype)
-
-
-                res.send({
-                    "message": "Login Successful",
-                    "status": true,
-                    "usertype":result.users.usertype,
-                    "userId":result.users.userId
-
-                });
-
-            })
-            .catch(err => res.status(err.status).json({
-                message: err.message
-            }).json({
-                status: err.status
-            }));
-
-    });
-    cloudinary.config({
-        cloud_name: 'diyzkcsmp',
-        api_key: '188595956976777',
-        api_secret: 'F7ajPhx0uHdohqfbjq2ykBZcMiw'
-    });
-
-    router.post('/UploadDocs', multipartMiddleware, function(req, res, next) {
-        console.log("req123..",req.body)
-        const id = req.query['requestid'];
-        console.log(id)
-        var photo = new Photo(req.body);
-        console.log("req.files.image" + JSON.stringify(req.files));
-        var imageFile = req.files.file.path;
-        cloudinary
-            .uploader
-            .upload(imageFile, {
-                tags: 'express_sample'
-            })
-            .then(function(image) {
-                console.log('** file uploaded to Cloudinary service');
-                console.dir(image);
-                photo.url = image.url;
-                photo.requestid = id;
-                // photo.claimno = claimno;
-                // Save photo with image metadata
-                return photo.save();
-            })
-            .then(function(photo) {
-
-                res.send({
-                    url: photo._doc.url,
-                    //claimno: photo._doc.claimno,
-                    message: "files uploaded succesfully"
-                });
-            })
-            .finally(function() {
-
-                res.render('photos/create_through_server', {
-                    photo: photo,
-                    upload: photo.image
-                });
-            });
-    });
-
-    router.get('/images/id', cors(), (req, res) => { 
-     
-        console.log("req123..",req.body)
-        const id = req.query['requestid'];
-        console.log(id)
-  
-    //     console.log("req123...",req.body)
-    //     const id = req.body.requestid
-    //    console.log("id" + id);
-        Photo
-            .find({
-                "requestid": id
-            })
-            .then((images) => {
-                console.log("enter in to the photo",images);
-                var image = [];
-                console.log("length",images.length);
-                for (let i = 0; i < images.length; i++) {
-                    image.push(images[i]._doc)
-
-                }
-
-                res.send({
-                    images: image,
-                    message: "image fetched succesfully"
-                });
-            })
-
-    });
-
-
-
-
-    router.post('/loandetails', cors(), (req, res) => {
-        console.log("body========>",req.body)
-        // const requestid = req.body.requestid;
-        // console.log("line number 203----->",requestid);
-        // var requestid = "";
-        // var possible = "0123456789674736728367382772898366377267489457636736273448732432642326734"
-        // for (var i = 0; i < 3; i++)
-        //     requestid += (possible.charAt(Math.floor(Math.random() * possible.length))).toString();
-        // console.log("requestid" + requestid)
-        const userId = req.body.userId;
-        console.log("userId",userId);
-        var transactionstring =req.body.transactionstring;
-        console.log("line number 212-------->",transactionstring)
     
+    router.post('/registerUser', cors(), (req, res) => {
 
+        const email = req.body.email;
+        console.log(email);
+        const password = req.body.password;
+        console.log(password);
+        const rapidID = crypto.createHash('sha256').update(email).digest('base64');
+          console.log(rapidID);
+        const userObject = req.body.userObject;
+          console.log(userObject);
+        const usertype = req.body.usertype;
+          console.log(usertype);
 
-        //  loan.loandetails(requestid, transactionstring)
+        if (!email || !password || !usertype) {
 
-        savetransaction.savetransaction(userId,transactionstring)
-            
-        .then(result => {
+            res.status(400).json({
+                message: 'Invalid Request !'
+            });
 
-                console.log(result);
-                res.send({
-                    "message": result.message,
-                    // "requestid": requestid,
-                    "status": true
+        } else {
 
+            register.registerUser(email, password,rapidID,userObject,usertype)
 
-                });
+            .then(result => {
+
+                res.status(result.status).json({
+                    message: result.message,
+                    ind: true
+                })
             })
 
             .catch(err => res.status(err.status).json({
@@ -264,479 +164,649 @@ module.exports = router => {
             }).json({
                 status: err.status
             }));
+        }
+    });
+
+
+    router.post('/requestdocs', (req, res) => {
+       
+            const email = req.body.email;
+            const rapidID = getrapidID(req);
+            const orgname = getorgname(req);
+            const docs = req.body.docs;
+            const status = req.body.status;
+         //check if token is valid
+            if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+             //body required field validation
+        if (!rapidID || !email || !status||!orgname) {
+            console.log(" invalid body ")
+            return res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        }
+             
+        requestDocs.reqstDocs(email, rapidID, orgname, docs, status)
+
+                .then(result => {
+
+                    res.status(result.status).json({
+                        message: result.message,
+
+                    })
+                })
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }).json({
+                    status: err.status
+                }));
+            });
+
+    router.post('/approveReject', (req, res) => {
+     
+        const rapidID = getrapidID(req);
+        const docTypes = req.body.docTypes;
+       const OrgID = req.body.OrgID.text;
+       //  const OrgID = req.body.OrgID;
+        const status = req.body.status;
+          //token validation
+        if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+
+        //status validation
+        if (status !== "approved") {
+            console.log(" status already approved ")
+            return res.status(403).json({
+                message: "request rejected"
+            })
+        }
+
+
+
+        //body required field validation
+        if (!rapidID || !docTypes || !status) {
+            console.log(" invalid body ")
+            return res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        }
+
+        approvedReject.approvedReject(rapidID, OrgID, status, docTypes)
+            .then((result) => {
+                console.log("approval was successfull" + JSON.stringify(result))
+                res.status(200).json({
+                    message: result,
+                })
+            }).catch((err) => {
+                res.status(502).json({
+                        message: err.message
+                    }).json({
+                        status: err.status
+                    }) // end of json
+            }); // end of catch
+
+    });
+         router.post('/approveRejectDirect', (req, res) => {
+     
+        const rapidID = getrapidID(req);
+        const docTypes = req.body.docTypes;
+        const OrgID = req.body.OrgID;
+        const status = req.body.status;
+          //token validation
+        if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+
+        //status validation
+        if (status !== "approved") {
+            console.log(" status already approved ")
+            return res.status(403).json({
+                message: "request rejected"
+            })
+        }
+
+
+
+        //body required field validation
+        if (!rapidID || !docTypes || !status) {
+            console.log(" invalid body ")
+            return res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        }
+
+        approvedReject.approvedReject(rapidID, OrgID, status, docTypes)
+            .then((result) => {
+                console.log("approval was successfull" + JSON.stringify(result))
+                res.status(200).json({
+                    message: result,
+                })
+            }).catch((err) => {
+                res.status(502).json({
+                        message: err.message
+                    }).json({
+                        status: err.status
+                    }) // end of json
+            }); // end of catch
 
     });
 
- router.get('/getdetailsuser', cors(), (req, res) => {
+
+    
        
-        getdetailsuser
-                .getdetailsuser()
 
-                .then(function(result) {
-                    console.log("result---",result)
+    router.get('/fetchrequests', (req, res) => {
+           
+                   if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
 
-                    res.send({
-                        status: result.status,
-                        message: result.usr
-                    });
+            const email = getemail(req);
+
+             if (!email) {
+            console.log(" invalid body ")
+            return res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        }
+                fetchRequests.fetchrequest(email)
+
+                .then(result => {
+                    var activeRequest = [];
+                    //  console.log("length of result array"+result.campaignlist.body.campaignlist.length);
+                    for (let i = 0; i < result.notifications.length; i++) {
+
+                        if (result.notifications[i].status === "request sent") {
+
+                            activeRequest.push(result.notifications[i]);
+
+
+                        } else if (result.notifications[i].status === "active") {
+
+                            return res.json({
+                                status: 409,
+                                message: 'requests not found'
+                            });
+
+
+                        }
+                    }
+                    res.status(result.status).json({
+                        message: result.message,
+                        requests: activeRequest
+                    })
                 })
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }).json({
+                    status: err.status
+                }));
+            
+      
+    });
+    
+/*
+    router.post('/registerOrg', cors(), (req, res) => {
+
+        const orgname = req.body.orgname;
+        const email = req.body.email;
+        const orgcontact = req.body.orgcontact;
+        const pin = req.body.pin;
+        const rapidID = crypto.createHash('sha256').update(email.concat(orgcontact)).digest('base64');
+
+
+        if (!orgname || !email || !pin || !orgcontact || !rapidID || !orgname.trim() || !email.trim() || !pin.trim() || !orgcontact.trim()) {
+
+            res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        } else {
+
+            registerOrg.registerOrg(orgname, email, orgcontact, pin, rapidID)
+
+            .then(result => {
+
+                res.setHeader('Location', '/org/' + email);
+                res.status(result.status).json({
+                    message: result.message,
+                    org: true
+                })
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message,
+                status: err.status
+            }));
+        }
+    });
+    */
+    router.post('/addDoc', cors(), (req, res) => {
+
+            const docType = req.body.docType;
+            const docNo = req.body.docNo;
+            const rapid_doc_ID = crypto.createHash('sha256').update(docNo).digest('base64');
+            const rapidID = getrapidID(req);
+            const docinfo = req.body.docinfo;
+            
+             if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+
+             if (!docType||!docNo||!rapidID) {
+            console.log(" invalid body ")
+            return res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        }
+
+                doc.addDoc(docType, docNo, rapid_doc_ID, rapidID, docinfo)
+
+                .then(result => {
+
+
+                    res.status(result.status).json({
+                        message: result.message
+                    })
+                })
+
                 .catch(err => res.status(err.status).json({
                     message: err.message
                 }));
 
+        
+    });
 
-    }); 
 
 
-    router.get('/getparticulardetails', cors(), (req, res) => {
-       if (1 == 1) {
-            
-                        const requestid1 = checkToken(req);
-                        console.log("requestid1", requestid1);
-                        const requestid = requestid1;
-            
-            
-                        getparticulardetails.getparticulardetails(requestid)
-                        .then(function(result) {
-                            console.log("requestid1",requestid1)
-                            console.log("result.query",result.query)
-                              return res.json({
-                                 "status":200,
-                                 "message": result.query
-                             });
-                         })
-                         .catch(err => res.status(err.status).json({
-                             message: err.message
-                         }));
-                 } else {
-                     res.status(401).json({
-                         "status": false,
-                         message: 'cant fetch data !'
-                     });
-                 }
-                });
-
-                router.get('/getHistory',(req,res)=>{
-                    console.log("requ...123>>>ui>>>",req.body);
-                    const userId = checkToken(req);
-                    console.log("userId", userId);
-                    
-
-                           getHistory.getHistory (userId)
-                                .then(result=>{
-                                    console.log("result....123>>>",result);
-                                   res.status(result.status).json({
-                                    result:result.docs,
-
-                                })
-                            })
-                            
-                           .catch(err => res.status(err.status).json({
-                                message: err.message
-                            }).json({
-                                status: err.status
-                            }));
-                        })
-                        
-
-    router.post('/savetransaction', cors(), (req, res) => {
-        var name = req.body.name;
-        var transactionstring = JSON.stringfy(req.body.transactionstring);
-        var requestid = req.body.requestid;
-
-        savetransaction
-            .savetransaction(name, transactionstring, requestid)
-            .then(function(result) {
-                console.log(result)
-
-                res.send({
-
-                    message: "entered successfully"
-                });
+    router.get('/getMydocs', cors(), (req, res) => {
+        //token validation
+        if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
             })
+        }
+            const rapidID = getrapidID(req);
+
+                if (!rapidID) {
+                console.log("invalid json input")
+                return res.status(400).json({
+                message: 'invalid user,token not valid or found'
+                })
+                }
+
+                fetchUsersdocs.fetchUsersdocs(rapidID)
+
+                .then(result => {
+
+
+                    res.status(result.status).json({
+                        docObj: result.docArray,
+                        message: "fetched successfully"
+                    })
+                })
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
+
+            })
+            
+
+    router.get('/auditUser', cors(), (req, res) => {
+        if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+            const rapidID = getrapidID(req);
+
+            if (!rapidID) {
+                console.log("invalid json input")
+                return res.status(400).json({
+                message: 'invalid user,token not valid or found'
+                })
+                }
+
+                auditUser.auditUser(rapidID)
+
+                .then(result => {
+
+
+                    res.status(result.status).json({
+                        org: result.orgname,
+                        dates: result.timestamp,
+                        doctypes: result.documentid,
+                        message: "fetched successfully"
+                    })
+                })
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
+    });
+
+
+    router.post('/removedocs', cors(), (req, res) => {
+       if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+            const rapidID = getrapidID(req);
+            const rapid_doc_ID1 = req.body.rapid_doc_ID;
+            const rapid_doc_ID = crypto.createHash('sha256').update(rapid_doc_ID1).digest('base64');
+           
+            if (!rapidID || !rapid_doc_ID) {
+                console.log("invalid json")
+              return  res.status(400).json({
+                    message: 'wrong json input'
+                });
+
+            }
+                removedocs.removedocs(rapidID, rapid_doc_ID)
+
+                .then(result => {
+
+
+                    res.status(result.status).json({
+                        message: result.message
+                    })
+                })
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));           
+
+    });
+
+   
+    router.get('/getSharedDocs', cors(), (req, res) => {
+        if (checkToken(req)) {
+            console.log("invalid token")
+            const rapidID = getrapidID(req);
+            if (!rapidID) {
+
+                res.status(400).json({
+                    message: 'invalid user,token not valid or found'
+                });
+
+            } else {
+
+                getSharedDocs.getSharedDocs(rapidID)
+
+                .then(result => {
+
+
+                    res.status(result.status).json({
+                        message: result.sharedDocs
+                    })
+                })
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
+
+            }
+        }
+
+    });
+
+
+
+    router.post('/revokeAccess', cors(), (req, res) => {
+        const rapidID = getrapidID(req);
+        const orgID = req.body.orgID;
+        const rapid_doc_ID = req.body.rapid_doc_ID;
+
+        if (!rapidID || !rapid_doc_ID || !orgID) {
+            res.status(400).json({
+                message: 'invalid user,token not valid or found'
+            });
+        } else {
+            revokeAccess.revokeAccess(rapidID, rapid_doc_ID, orgID)
+
+            .then(result => {
+
+
+                res.status(result.status).json({
+                    message: result.message
+                })
+            })
+
             .catch(err => res.status(err.status).json({
                 message: err.message
             }));
 
-
+        }
     });
+    router.get('/audit', cors(), function(req, res) {
+        if (checkToken(req)) {
 
+            console.log(req.body)
 
-    router.post('/approveloan', cors(), (req, res) => {
-        console.log(req.body)
-       const userId =req.body.id ;
-        console.log(userId);
-        const transactionstring = req.body.transactionstring;
-        console.log(transactionstring);
-        console.log("legal..123>>>",transactionstring.legal)
-
-        if (transactionstring.legal =="approved") {
-            
-            res
-                .status(200)
-                .json({
-                    message: 'Your Request has been approved !'
-                });
-
+            res.send([{
+                    "date": "25 july 2017",
+                    "docType": "aadhar",
+                    "org": "icici"
+                },
+                {
+                    "date": "12 july 2017",
+                    "docType": "aadhar",
+                    "org": "hdfc"
+                },
+                {
+                    "date": "10 july 2017",
+                    "docType": "pan card",
+                    "org": "icici"
+                },
+                {
+                    "date": "2 july 2017",
+                    "docType": "passport",
+                    "org": "swiss bank"
+                }
+            ])
         } else {
-             res
-                .status(200)
-                .json({
-                    message: 'Your Request has been rejected !'
-                });
-            }
-
-        updatetransaction
-        .updatetransaction(userId,transactionstring)
-        .then(result =>  {
-            console.log("result....",result)     
-        
-        })
-    });
-
-
-    router.get("/readRequest", (req, res) => {
-        //    var requestList = [];
-
-        if (1 == 1) {
-
-            const requestid = checkToken(req);
-            console.log("requestid1", requestid);
-            const requestid1 = requestid;
-
-
-            readRequest.readRequest(requestid)
-                .then(function(result) {
-                    readAlldata = result.query;
-                    console.log("readAlldata ---", readAlldata);
-                    return res.json({
-                        "status": 200,
-                        "message": result.query
-                    });
-                })
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
-        } else {
-            res.status(401).json({
-                "status": false,
-                message: 'cant fetch data !'
+            res.status(400).json({
+                message: 'invalid user,token not valid or found'
             });
+
         }
     });
 
-    router.post('/preclosingUser', cors(), (req, res) => {
 
-                const requestid = req.body.requestid;
-                console.log(requestid);
+    router.put('changePassword', (req, res) => {
 
-                const emiremaining = req.body.emiremaining;
-                console.log(emiremaining);
-        
-                const penaltyforclosure = req.body.penaltyforclosure;
-                console.log("penalty",penaltyforclosure);
-        
-                const installmentpermonth = req.body.installmentpermonth;
-                console.log(installmentpermonth);
-                const documentrequiredforclosing = req.body.documentrequiredforclosing;
-                console.log(documentrequiredforclosing);
-                const paymentmode = req.body.paymentmode;
-                console.log(paymentmode);
-        
-                if (!requestid||!emiremaining || !penaltyforclosure || !installmentpermonth || !documentrequiredforclosing || !paymentmode) {
-        
-                    res
-                        .status(400)
-                        .json({
-                            message: 'Invalid Request !'
-                        });
-        
-                } else {
-        
-                    preclosing
-                        .preclosingUser(requestid,emiremaining,penaltyforclosure,installmentpermonth,documentrequiredforclosing,paymentmode)
-                        .then(result => {
-        
-                            res.send({
-                                "message": "preclosing request accepted",
-                                "status": true,
-        
-                            });
-        
-        
-                        })
-                        .catch(err => res.status(err.status).json({
-                            message: err.message
-                        }))
-                }
-            });
+        if (checkToken(req)) {
 
-          router.post('/loanscheduleUser', cors(), (req, res) => {
+            const oldPin = req.body.pin;
+            const newPin = req.body.newPin;
 
-                console.log("ui....123>>>",req.body);
-                const requestid = req.body.requestid;
-                console.log(requestid);
-                const transactionstring = req.body.transactionstring;
-                console.log(transactionstring);
-                
-                         loanschedule
-                             .loanscheduleUser(requestid,transactionstring)
-                                .then(result => {
-                                    if(!requestid) {
-                                        res
-                                        .status(400)
-                                        .json({
-                                            message: 'Invalid Request !'
-                                        });
-                                    } 
-                                    else {
-                                    updatetransaction
-                                    .updatetransaction(requestid,transactionstring)
-                                    .then(function(result) {
-                                        console.log("result....",result)                                    
-                                    res.send({
-                                        "message": "loanschedule created successfully",
-                                        "status": true,
-                
-                                    });
-                
-                
-                                })
-                            
-                                .catch(err => res.status(err.status).json({
-                                    message: err.message
-                                }))
-                            }
-                            });
-                        
-                    }); 
+            if (!oldPin || !newPin || !oldPin.trim() || !newPin.trim()) {
 
-                    router.post('/getloanschedule', cors(), (req, res) => {
-
-                                console.log(req.body);
-                                console.log(req.body.requestid);
-                                var requestid = req.body.requestid;
-                                getloanschedule
-                                    .getloanschedule(requestid)
-                                    .then(function(result) {
-                                        console.log(result)
-                        
-                                        res.send({
-                                            status: result.status,
-                                            message: result.usr
-                                        });
-                                    })
-                                    .catch(err => res.status(err.status).json({
-                                        message: err.message
-                                    }));
-                        
-                        
-                            }); 
-
-                            router.get("/getloandetails", cors(), (req, res) => {
-                                
-                                        
-                                
-                                            var startKey = '000';
-                                            console.log("startKey", startKey);
-                                            var endKey = '999';
-                                            console.log("endKey--", endKey);
-                                
-                                            getloandetails
-                                                .getloandetails(startKey, endKey)
-                                                .then(function(result) {
-
-                                                    console.log("  result.query1234..>>>", result.query);
-                                                    console.log("  result.querykey..>>>", result.query.Key);
-                                                    res.status(result.status).json({message:result.query})
-                                                })
-                                                .catch(err => res.status(err.status).json({
-                                                    message: err.message
-                                                }));
-                                       
-
-                                    });
-
-
-                                   /* router.post('/creditscore', cors(), (req, res) => {
-                                        console.log("entering in to the update trans",req.body);
-
-                                        var body = req.body
-                                        var requestid = body.id;
-                                        var transactionstring = body.transactionstring;
-                                        
-                                        console.log("entering in to the upda trans",requestid,transactionstring);
-
-                                            creditscore
-                                            .creditscore(requestid)
-                                            .then(results => {
-                                               console.log("results123......>>>>",results.creditscore);
-                                                var creditscore = results.creditscore
-                                                console.log("transactionstring",transactionstring);
-                                                console.log("transactionstring",req.body.creditscore);
-
-                                                var updatedString = ""
-                                                if(body.creditscore == ""){
-                                                    console.log("creditscore ++++++++++>>>>>");
-                                                updatedString= {
-        
-                                                    "creditscore":""
-                                                } 
-                                        
-                                            }
-                                            else{
-                                                console.log("creditscore notnull ++++++++++>>>>>");
-                                                
-                                                updatedString= {
-
-                                                    "creditscore": creditscore
-                                                }
-                                                
-                                            
-                                            } 
-                                            updatetransaction
-                                            .updatetransaction(requestid,updatedString)
-                                            .then(function(result) {
-                                                console.log("result....",result)                                    
-                                
-                                                res.send({
-                                
-                                                    message: result.message,
-                                                    results:results.creditscore
-                                                });
-                                            })
-                                        
-                                            .catch(err => res.status(err.status).json({
-                                                message: err.message
-                                            }));
-                                            
-                                    })
-                                        
-                                    }); */ 
-
-
-   router.post('/updatetransaction', cors(), (req, res) => {
-        
-        console.log("entering in to the update trans.....ui",req.body);
-        
-         var body = req.body
-        var userId = body.id;
-      var transactionstring = body.transactionstring;
-      
-                                                
-  console.log("entering in to the upda trans",userId,transactionstring);
-
-  
-
-        updatetransaction.updatetransaction(userId,transactionstring)
-        
-        
-        .then(result => {
-            if(!userId) {
-                res
-                .status(400)
-                .json({
+                res.status(400).json({
                     message: 'Invalid Request !'
                 });
+
+            } else {
+
+                password.changePassword(req.params.id, oldPassword, newPassword)
+
+                .then(result => res.status(result.status).json({
+                    message: result.message
+                }))
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
+
             }
+        } else {
 
-                //console.log(result);
-                else {
-                res.send({
-                    "message": result.message,
-                    "status": true
+            res.status(401).json({
+                message: 'Invalid Token !'
+            });
+        }
+    });
 
 
-                });
-            }
-            })
+    router.post('/forgotPassword', (req, res) => {
+
+        const email = req.params.id;
+        const token = req.body.token;
+        const newPassword = req.body.password;
+
+        if (!token || !newPassword || !token.trim() || !newPassword.trim()) {
+
+            password.resetPasswordInit(email)
+
+            .then(result => res.status(result.status).json({
+                message: result.message
+            }))
 
             .catch(err => res.status(err.status).json({
                 message: err.message
-            }).json({
-                status: err.status
             }));
 
-    }); 
+        } else {
 
+            password.resetPasswordFinish(email, token, newPassword)
 
+            .then(result => res.status(result.status).json({
+                message: result.message
+            }))
 
-     router.get("/readIndex", cors(), (req, res) => {
-
-          if (1==1) {
-                                            
-            readIndex
-              .readIndex({})
-                    .then(function(result) {
-                    console.log("result",result);
-                     var firstrequest = result.query[0]
-                       console.log("firstrequest--", firstrequest);
-                       var length = result.query.length;
-                        var lastrequest = result.query[length - 1];
-                          console.log("lastrequest--", lastrequest);
-                          console.log("query",result);
-                                            
-                                       return res.json({
-                                                "status": 200,
-                                                "result": result
-                                                       });
-                                                   })
-                                                .catch(err => res.status(err.status).json({
-                                                     message: err.message
-                                                    }));
-                                                    } else {
-                                                        res
-                                                            .status(401)
-                                                            .json({
-                                                                "status": false,
-                                                                message: 'cant fetch data !'
-                                                            });
-                                                    }
-                                                });
-                                            
-
-
-            
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+        }
+    });
 
     function checkToken(req) {
 
-        const token = req.headers['authorization'];
+        const token = req.headers['x-access-token'];
 
         if (token) {
 
             try {
-                (token.length != 0)
-                return token
+
+                var decoded = jwt.verify(token, config.secret);
+
+                return true;
+
+
             } catch (err) {
+
                 return false;
             }
+
         } else {
+
             return false;
         }
     }
 
     function getrapidID(req) {
-        
-               const token = req.headers['x-access-token'];
-        
-               if (token) {
-        
-                   try {
-        
-                     //  var decoded = jwt.verify(token, config.secret);
-                    
-                        return decoded.register.userId;
-        
-        
-                   } catch (err) {
-        
-                       return false;
-                    }
-        
-               } else {
-        
-                   return false;
-                }
+
+        const token = req.headers['x-access-token'];
+
+        if (token) {
+
+            try {
+
+                var decoded = jwt.verify(token, config.secret);
+                return decoded.users.rapidID;
+
+
+            } catch (err) {
+
+                return false;
             }
 
-  }
+        } else {
+
+            return false;
+        }
+    }
+
+    function getorgname(req) {
+
+        const token = req.headers['x-access-token'];
+
+        if (token) {
+
+            try {
+
+                var decoded = jwt.verify(token, config.secret);
+                var orgname = decoded.users.orgname;
+                // var rapidID = decoded.users.rapidID;
+
+                return orgname
+
+            } catch (err) {
+
+                return false;
+            }
+
+        } else {
+
+            return false;
+        }
+    }
+
+    function getemail(req) {
+
+        const token = req.headers['x-access-token'];
+
+        if (token) {
+
+            try {
+
+                var decoded = jwt.verify(token, config.secret);
+                var email = decoded.users.email;
+
+
+                return email
+
+
+
+            } catch (err) {
+
+                return false;
+            }
+
+        } else {
+
+            return false;
+        }
+    }
+
+
+}
