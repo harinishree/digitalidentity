@@ -7,17 +7,20 @@ exports.revokeAccess = (rapidID, rapid_doc_ID, orgID) =>
 
     new Promise((resolve, reject) => {
 
+        var transactionstring = {
+            rapid_doc_ID: rapid_doc_ID,
+            orgID: orgID
+        }
 
         const revokeAccess = ({
 
             rapidID: rapidID,
-            rapid_doc_ID: rapid_doc_ID,
-            orgID: orgID
+            transactionstring:transactionstring
 
         })
 
         bcSdk.revokeAccess({
-                user: users,
+
                 revokeAccess: revokeAccess
             })
 

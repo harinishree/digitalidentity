@@ -1,22 +1,25 @@
 'use strict';
 
 const user = require('../models/user');
-var bcSdk = require('../src/blockchain/blockchain_sdk');
-const users = 'risabh.s';
-
+// var bcSdk = require('../src/blockchain/blockchain_sdk');
+// const users = 'risabh.s';
+var bcSdk = require('../fabcar/invoke');
 
 exports.registerOrg = (orgname, email, orgcontact, pin, rapidID) =>
 
     new Promise((resolve, reject) => {
 
-        const newUser = new user({
+        var transactionstring = {
 
             orgname: orgname,
             email: email,
             orgcontact: orgcontact,
             pin: pin,
-            rapidID: rapidID,
             created_at: new Date(),
+        }
+        const newUser = new user({
+            rapidID: rapidID,
+            transactionstring:transactionstring     
         });
 
         newUser.save()
@@ -27,8 +30,7 @@ exports.registerOrg = (orgname, email, orgcontact, pin, rapidID) =>
             }))
 
             .then(() => bcSdk.createUser({
-                user: users,
-                UserDetails: newUser
+                TransactionDetails: newUser
             }))
 
             .catch(err => {

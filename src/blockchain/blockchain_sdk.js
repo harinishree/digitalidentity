@@ -238,6 +238,63 @@ function revokeAccess(params) {
         }
     });
 }
+function revokeAccess(params) {
+
+    console.log("calling SDK for revoke access");
+    return new Promise(function(resolve, reject) {
+        var revokeAccess;
+        try {
+            logHelper.logEntryAndInput(logger, ' revokeAccess', params);
+
+            if (!validate.isValidJson(params)) {
+                logHelper.logError(logger, 'revokeAccess', 'Invalid params');
+                return reject({ statusCode: constants.INVALID_INPUT, body: 'Could not revokeAccess. Invalid params' })
+            }
+
+            var user = params.user;
+            if (!validate.isValidString(user)) {
+                logHelper.logError(logger, 'revokeAccess', 'Invalid user');
+                return reject({ statusCode: constants.INVALID_INPUT, body: 'Could not  revokeAccess. Invalid user' })
+            }
+
+            revokeAccess = params.revokeAccess;
+
+            if (!validate.isValidJson(revokeAccess)) {
+                logHelper.logError(logger, 'revokeAccess', 'Invalid json ');
+                return reject({ statusCode: constants.INVALID_INPUT, body: 'Could revokeAccess. Invalid json object' })
+            }
+            //here in function name we use the actual function name which is used for registeration i.e User_register
+
+            var reqSpec = getRequestSpec({
+                functionName: 'revokeAccess',
+                args: [
+
+
+                    revokeAccess.rapidID,
+                    revokeAccess.orgID,
+                    revokeAccess.rapid_doc_ID
+
+
+                ]
+            });
+
+            recursiveInvoke({ requestSpec: reqSpec, user: user })
+                .then(function(resp) {
+                    logHelper.logMessage(logger, 'revokeAccess', 'Successfully revoked Access', resp.body);
+                    return resolve({ statusCode: constants.SUCCESS, body: revokeAccess });
+                })
+                .catch(function(err) {
+                    logHelper.logError(logger, 'revokeAccess', 'Could not revokeAccess', err);
+                    return reject({ statusCode: constants.INTERNAL_SERVER_ERROR, body: 'Could not revokeAccess' });
+
+                });
+
+        } catch (err) {
+            logHelper.logError(logger, 'revokeAccess', 'Could not revokeAccess on blockchain ledger: ', err);
+            return reject({ statusCode: constants.INTERNAL_SERVER_ERROR, body: 'Could not revokeAccess' });
+        }
+    });
+}
 
 
 function removedocs(params) {

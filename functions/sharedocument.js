@@ -1,22 +1,26 @@
 'use strict';
 
 const users = "risabh.s";
-var bcSdk = require('../fabcar/query');
+var bcSdk = require('../fabcar/invoke');
 exports.shareDocument = (rapidID, rapid_doc_ID, orgID) =>
 
     new Promise((resolve, reject) => {
+
+        var transactionstring = {
+            rapid_doc_ID: rapid_doc_ID,
+            orgID: orgID
+        }
 
 
         const shareDoc = ({
 
             rapidID: rapidID,
-            rapid_doc_ID: rapid_doc_ID,
-            orgID: orgID
+            transactionstring:transactionstring
 
         })
 
         bcSdk.shareDocument({
-                user: users,
+                
                 sharedDocDetails: shareDoc
             })
 

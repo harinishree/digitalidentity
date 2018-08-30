@@ -1,8 +1,8 @@
 'use strict';
 
 const user = require('../models/user');
-var bcSdk = require('../src/blockchain/blockchain_sdk');
-const users = 'risabh.s';
+var bcSdk = require('../fabcar/invoke');
+
 
 
 exports.registerUser = (email, password, rapidID,userObject,usertype) =>
@@ -18,7 +18,7 @@ exports.registerUser = (email, password, rapidID,userObject,usertype) =>
 
         const newUser = new user({
             rapidID: rapidID,
-            transactionString:transactionString 
+            transactionstring:transactionstring 
         });
         
         newUser.save()
