@@ -29,7 +29,7 @@
  */
  package main
  import (
-     "bytes"
+     
      "encoding/json"
      "fmt"
      "time"
@@ -52,6 +52,7 @@
 	Owner string   `json:"owner"`
 	Docs  []string `json:"docs"`
 }
+
 type User struct {
 	Owns []string `json:"owns"`
 	//SharedwithMe []DocumentInfo `json:"sharedwithme"`
@@ -78,219 +79,176 @@ type User struct {
  func (t *SimpleChaincode) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
      function, args := APIstub.GetFunctionAndParameters()
      switch function {
-     case "newRequest":
-         return t.newRequest(APIstub, args)
-     case "updateRequest":
-         return t.updateRequest(APIstub, args)
-     case "readIndex":
-         return t.readIndex(APIstub, args)
-     case "readRequest":
-         return t.readRequest(APIstub, args)
-     case "readAllRequest":
-     return t.readAllRequest(APIstub,args)
+     case "createUser":
+         return t.createUser(APIstub, args)
+     case "addDocument":
+         return t.addDocument(APIstub, args)
+    //  case "shareDocument":
+    //      return t.shareDocument(APIstub, args)
+     case "getMydocs":
+         return t.getMydocs(APIstub, args)
     case "revokeAccess":
         return t.revokeAccess(APIstub,args)
-    case "getHistory":
-        return t.getHistory(APIstub,args)
-
+    
      }
      return shim.Error("Invalid Smart Contract function name.")
  }
  //1.newrequest   (#user,#transactionlist)
- func (t *SimpleChaincode) newRequest(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-     // creating new request
-     // {requestid : 1234, involvedParties:['supplier', 'logistics', 'manufacturer','insurance']}
-     fmt.Println("creating new newRequest")
-     if len(args) < 2 {
-         fmt.Println("Expecting three Argument")
-         return shim.Error("Expected three arguments for new Request")
-     }
-    //  var request Request
-    //  var indexItem IndexItem
-    //  var transaction Transaction
-    //  var index []IndexItem
-    
-     var userId = args[0]
-     var transactionString = args[1]
-    // var userId = args[2]
-     fmt.Println(userId)
-    // fmt.Println(userId)
-    err := APIstub.PutState(userId,[]byte(transactionString))
-     
-	if err != nil {
-		fmt.Println("Could not save user to ledger", err)
-		//return nil, err
-		return shim.Error("error")
-	}
-		
+ func (t *SimpleChaincode) createUser(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+	//func createUser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("Entering createUser")
 
-
-
-	jsonAsBytes, err := json.Marshal(userId)
-	if err != nil {
-		fmt.Println("Could not marshal index object", err)
-		return shim.Error("Could not marshal index object")
+	if len(args) < 1 {
+		fmt.Println("Expecting One Argument")
+		return shim.Error("Expected at least one arguments for adding a user")
 	}
-	err = APIstub.PutState("index", jsonAsBytes)
+
+	var userid = args[0]
+	var userinfo = `{"owns":[],"mymap":{}, "audit":{}}`
+
+	err := APIstub.PutState(userid, []byte(userinfo))
 	if err != nil {
-		fmt.Println("Could not save updated index ", err)
-		return shim.Error("error")
+		fmt.Println("Could not save user to ledger")
+		return shim.Error("Could not save user to ledger")
 	}
-	fmt.Println("index", jsonAsBytes)
-	fmt.Println("Successfully saved")
+
+	fmt.Println("Successfully saved user/org")
 	return shim.Success(nil)
 }
- //2.updateRequest
- func (t *SimpleChaincode) updateRequest(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-     // creating new request
-     // {requestid : 1234, involvedParties:['supplier', 'logistics', 'manufacturer','insurance']}
-     fmt.Println("creating new newRequest")
-     if len(args) < 2 {
-         fmt.Println("Expecting three Argument")
-         return shim.Error("Expected three arguments for new Request")
-     }
-    //  var transaction Transaction
-    //  var request Request
-    //  var indexItem IndexItem
-    //  var index []IndexItem
-   
-     var userId = args[0]
-    
-     var transactionString = args[1]
-    //  var userId = args[2]
-     fmt.Println(userId)
-    //  fmt.Println(userId)
-     
-	err := APIstub.PutState(userId,[]byte(transactionString))
-     
-	if err != nil {
-		fmt.Println("Could not save user to ledger", err)
-		//return nil, err
-		return shim.Error("error")
+ //2.addDocument()   (#user,#doc)
+func (t *SimpleChaincode) addDocument(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+	fmt.Println("Entering addDocument")
+	var user User
+	if len(args) < 2 {
+		fmt.Println("Expecting two Argument")
+		return shim.Error("Expected at least two arguments for adding a document")
 	}
-		
 
-
-
-	jsonAsBytes, err := json.Marshal(userId)
+	var userid = args[0]
+	fmt.Println(userid)
+	var docid = args[1]
+	fmt.Println(docid)
+	bytes, err := APIstub.GetState(userid)
 	if err != nil {
-		fmt.Println("Could not marshal index object", err)
-		return shim.Error("Could not marshal index object")
+		return shim.Error("Error")
 	}
-	err = APIstub.PutState("index", jsonAsBytes)
+
+	err = json.Unmarshal(bytes, &user)
 	if err != nil {
-		fmt.Println("Could not save updated index ", err)
-		return shim.Error("error")
+		fmt.Println("unable to unmarshal user data")
+		return shim.Error("Error")
 	}
-	fmt.Println("index", jsonAsBytes)
-	fmt.Println("Successfully saved")
+
+	user.Owns = append(user.Owns, docid)
+
+	_, err = writeIntoBlockchain(userid, user, APIstub)
+	if err != nil {
+		fmt.Println("Could not save add doc to user", err)
+		return shim.Error("Error")
+	}
+
+	fmt.Println("Successfully added the doc")
 	return shim.Success(nil)
+
 }
- //3. readRequest    (#user) Query
- func (t *SimpleChaincode) readIndex(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-     // querying the request
-     //var index []IndexItem
-     indexAsBytes, _ := APIstub.GetState("index")
-     //json.Unmarshal(reqAsBytes, &index)
-     return shim.Success(indexAsBytes)
- }
- //4.readtransactionList  (#user) Query
- func (t *SimpleChaincode) readRequest(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-     // querying the request
-     //var request Request
-     fmt.Println("Reading the request data for ", args[0])
-     reqAsBytes, _ := APIstub.GetState(args[0])
-     //json.Unmarshal(reqAsBytes, &request)
-     return shim.Success(reqAsBytes)
- }
- //5.readAlldetails
- func (t *SimpleChaincode) readAllRequest(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-    //startKey := args[0]
-    //endKey := args[1]
-    fmt.Println("0",args[0])
-    fmt.Println("1",args[1])
+ //3. shareDocument()    (#doc,#user, #org)  Invoke
+// func (t *SimpleChaincode) shareDocument(APIstub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+// 	fmt.Println("Entering shareDocument")
+// 	var user User
+// 	var org User
+// 	//	var doc DocumentInfo
+// 	//fmt.Println(doc)
+// 	if len(args) < 2 {
+// 		fmt.Println("Expecting three Argument")
+// 		return shim.Error("Expected at least three arguments for sharing  a document")
+// 	}
 
-  resultsIterator, err := APIstub.GetStateByRange( args[0], args[1])
-   if err != nil {
-    return shim.Error(err.Error())
+// 	var userid = args[0]
+// 	var docid = args[1]
+// 	var orgid = args[2]
+// 	//fetching the user
+// 	userbytes, err := APIstub.GetState(userid)
+// 	if err != nil {
+// 		fmt.Println("could not fetch user", err)
+// 		return shim.Error("could not fetch user")
+// 	}
+// 	err = json.Unmarshal(userbytes, &user)
+// 	if err != nil {
+// 		fmt.Println("unable to unmarshal user data")
+// 		return shim.Error("unable to unmarshal user data")
+// 	}
+// 	if !contains(user.Owns, docid) {
+// 		fmt.Println("docment doesnt exists")
+// 		return shim.Error("docment doesnt exists")
+// 	}
+// 	//fetch oraganisation
+// 	orgbytes, err := APIstub.GetState(orgid)
+// 	if err != nil {
+// 		fmt.Println("could not fetch user", err)
+// 		return shim.Error("could not fetch user")
+// 	}
+// 	err = json.Unmarshal(orgbytes, &org)
+// 	if err != nil {
+// 		fmt.Println("unable to unmarshal org data")
+// 		return shim.Error("unable to unmarshal org data")
+// 	}
+
+// 	if org.SharedwithMe == nil {
+// 		org.SharedwithMe = make(map[string][]string)
+// 	}
+
+// 	if user.Auditrail == nil {
+// 		user.Auditrail = make(map[string][]string)
+
+// 	}
+// 	//adding the document if it doesnt exists already
+// 	if !contains(org.SharedwithMe[userid], docid) {
+// 		timestamp := makeTimestamp()
+// 		fmt.Println(timestamp)
+// 		//---------------Sharing the doc to Organisation-----------------------
+// 		org.SharedwithMe[userid] = append(org.SharedwithMe[userid], docid)
+
+// 		//-------------- Adding time stamp to user audit trail array-------------
+// 		user.Auditrail[orgid] = append(user.Auditrail[orgid], timestamp)
+// 		user.Auditrail[orgid] = append(user.Auditrail[orgid], docid)
+// 	}
+
+// 	_, err = writeIntoBlockchain(orgid, org, APIstub)
+// 	if err != nil {
+// 		fmt.Println("Could not save org Info", err)
+// 		return shim.Error("Could not save org Info")
+// 	}
+
+// 	_, err = writeIntoBlockchain(userid, user, APIstub)
+// 	if err != nil {
+// 		fmt.Println("Could not save user Info", err)
+// 		return shim.Error("Could not save user Info")
+// 	}
+
+// 	fmt.Println("Successfully shared the doc")
+// 	return shim.Success("Successfully shared the doc")
+
+// }
+ 
+//4. getMydocs()    (#user) Query
+func (t *SimpleChaincode) getMydocs(APIstub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("Entering get my docs")
+
+	if len(args) < 1 {
+		fmt.Println("Invalid number of arguments")
+		return shim.Error("Error")
+	}
+
+	var userid = args[0]
+	idasbytes, err := APIstub.GetState(userid)
+	if err != nil {
+		fmt.Println("Could not user info", err)
+		return shim.Error("Error")
+	}
+	return idasbytes, nil
 }
-defer resultsIterator.Close()
 
-// buffer is a JSON array containing QueryResults
-var buffer bytes.Buffer
-buffer.WriteString("[")
-
-bArrayMemberAlreadyWritten := false
-for resultsIterator.HasNext() {
-    queryResponse, err := resultsIterator.Next()
-    if err != nil {
-        return shim.Error(err.Error())
-    }
-    // Add a comma before array members, suppress it for the first array member
-    if bArrayMemberAlreadyWritten == true {
-        buffer.WriteString(",")
-    }
-    buffer.WriteString("{\"Key\":")
-    buffer.WriteString("\"")
-    buffer.WriteString(queryResponse.Key)
-    buffer.WriteString("\"")
-
-    buffer.WriteString(", \"Record\":")
-    // Record is a JSON object, so we write as-is
-    buffer.WriteString(string(queryResponse.Value))
-    buffer.WriteString("}")
-    bArrayMemberAlreadyWritten = true
-}
-buffer.WriteString("]")
-
-fmt.Printf("- alldata:\n%s\n", buffer.String())
-
-return shim.Success(buffer.Bytes())
-}
-
- func (t *SimpleChaincode) getHistory(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-    
-       fmt.Println("0",args[0])
-    
-      interatorArray, err := APIstub.GetHistoryForKey(args[0])
-        if err != nil {
-            return shim.Error(err.Error())
-        }
-        defer interatorArray.Close()
-    
-      // buffer is a JSON array containing QueryResults
-    var buffer bytes.Buffer
-    buffer.WriteString("[")
-    
-    bArrayMemberAlreadyWritten := false
-    for interatorArray.HasNext() {
-        queryResponse, err := interatorArray.Next()
-        if err != nil {
-            return shim.Error(err.Error())
-        }
-        // Add a comma before array members, suppress it for the first array member
-        if bArrayMemberAlreadyWritten == true {
-            buffer.WriteString(",")
-        }
-        //  buffer.WriteString("{\"Key\":")
-        //  buffer.WriteString("\"")
-        //  //buffer.WriteString(queryResponse.Key)
-        // buffer.WriteString("\"")
-        fmt.Println("query response ===============>",queryResponse)
-        buffer.WriteString("{ \"Records\":")
-        // Record is a JSON object, so we write as-is
-        buffer.WriteString(string(queryResponse.Value))
-        buffer.WriteString("}")
-        bArrayMemberAlreadyWritten = true
-    }
-    buffer.WriteString("]")
-    
-    fmt.Printf("- alldata:\n%s\n", buffer.String())
-    
-    return shim.Success(buffer.Bytes())
-    } 
-
-    func (t *SimpleChaincode) revokeAccess(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+ func (t *SimpleChaincode) revokeAccess(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
         if len(args) < 3 {
             fmt.Println("Expecting a minimum of three arguments Argument")
             return shim.Error("Expected at least one arguments for adding a user")
