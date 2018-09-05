@@ -16,7 +16,7 @@ const registerOrg = require('./functions/registerorg');
 const login = require('./functions/login');
 const profile = require('./functions/profile');
 const password = require('./functions/password');
-const config = require('./config/config.json');
+// const config = require('./config/config.json');
 const user = require('./models/user');
 const fetchUsersdocs = require('./functions/fetchUserdocs');
 const shareDocument = require('./functions/sharedocument');
@@ -153,10 +153,15 @@ module.exports = router => {
 
             .then(result => {
 
-                res.status(result.status).json({
-                    message: result.message,
-                    ind: true
-                })
+                // res.status(result.status).json({
+                //     message: result.message,
+                //     ind: true
+                // })
+                res.send({
+                    "message": result.message,
+                    "status": true
+
+                });
             })
 
             .catch(err => res.status(err.status).json({
@@ -403,18 +408,20 @@ module.exports = router => {
     */
     router.post('/addDoc', cors(), (req, res) => {
 
+            console.log("entering in to the addDoc")
             const docType = req.body.docType;
             const docNo = req.body.docNo;
             const rapid_doc_ID = crypto.createHash('sha256').update(docNo).digest('base64');
-            const rapidID = getrapidID(req);
+            // const rapidID = getrapidID(req);
+            const rapidID = req.body.rapidID;
             const docinfo = req.body.docinfo;
             
-             if (!checkToken(req)) {
-            console.log("invalid token")
-            return res.status(401).json({
-                message: "invalid token"
-            })
-        }
+        //      if (!checkToken(req)) {
+        //     console.log("invalid token")
+        //     return res.status(401).json({
+        //         message: "invalid token"
+        //     })
+        // }
 
              if (!docType||!docNo||!rapidID) {
             console.log(" invalid body ")
@@ -445,21 +452,23 @@ module.exports = router => {
 
     router.get('/getMydocs', cors(), (req, res) => {
         //token validation
-        if (!checkToken(req)) {
-            console.log("invalid token")
-            return res.status(401).json({
-                message: "invalid token"
-            })
-        }
-            const rapidID = getrapidID(req);
+        // if (!checkToken(req)) {
+        //     console.log("invalid token")
+        //     return res.status(401).json({
+        //         message: "invalid token"
+        //     })
+        // }
+        //     const rapidID = getrapidID(req);
 
-                if (!rapidID) {
-                console.log("invalid json input")
-                return res.status(400).json({
-                message: 'invalid user,token not valid or found'
-                })
-                }
+        //         if (!rapidID) {
+        //         console.log("invalid json input")
+        //         return res.status(400).json({
+        //         message: 'invalid user,token not valid or found'
+        //         })
+        //         }
 
+                const rapidID = req.query.rapidID;
+                console.log("rapidid",rapidID)
                 fetchUsersdocs.fetchUsersdocs(rapidID)
 
                 .then(result => {
@@ -549,16 +558,19 @@ module.exports = router => {
 
    
     router.get('/getSharedDocs', cors(), (req, res) => {
-        if (checkToken(req)) {
-            console.log("invalid token")
-            const rapidID = getrapidID(req);
-            if (!rapidID) {
 
-                res.status(400).json({
-                    message: 'invalid user,token not valid or found'
-                });
+        // if (checkToken(req)) {
+        //     console.log("invalid token")
+        //     const rapidID = getrapidID(req);
+        //     if (!rapidID) {
 
-            } else {
+        //         res.status(400).json({
+        //             message: 'invalid user,token not valid or found'
+        //         });
+
+        //    } else {
+            var rapidID = req.query.rapidID
+            console.log("rapidID",rapidID)
 
                 getSharedDocs.getSharedDocs(rapidID)
 
@@ -574,15 +586,16 @@ module.exports = router => {
                     message: err.message
                 }));
 
-            }
-        }
+        //    }
+        // }
 
     });
 
 
 
     router.post('/revokeAccess', cors(), (req, res) => {
-        const rapidID = getrapidID(req);
+        // const rapidID = getrapidID(req);
+        const rapidID = req.body.rapidID;
         const orgID = req.body.orgID;
         const rapid_doc_ID = req.body.rapid_doc_ID;
 
@@ -736,6 +749,7 @@ module.exports = router => {
     function getrapidID(req) {
 
         const token = req.headers['x-access-token'];
+        console.log("token",token)
 
         if (token) {
 

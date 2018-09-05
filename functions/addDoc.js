@@ -1,6 +1,6 @@
 'use strict';
 
-const doc = require('../models/doc');
+// const doc = require('../models/doc');
 var bcSdk = require('../fabcar/invoke');
 
 exports.addDoc = (docType, docNo, rapid_doc_ID, rapidID, docinfo) =>
@@ -14,25 +14,29 @@ exports.addDoc = (docType, docNo, rapid_doc_ID, rapidID, docinfo) =>
             docinfo: docinfo
         }
 
-        const newDoc = new doc({
+        // const newDoc = new doc({
 
-            rapidID: rapidID,
-            transactionstring:transactionstring
+        //     rapidID: rapidID,
+        //     transactionstring:transactionstring
             
-        })
+        // })
 
-        newDoc.save()
+        var newDoc = {
+            rapidID: rapidID,
+            transactionstring:transactionstring  
+        }
+
+        // newDoc.save()
 
 
-
+            bcSdk.addDocument
+            ({
+             
+                updatedetails: newDoc
+            })
             .then(() => resolve({
                 status: 201,
                 message: 'User Sucessfully added doccument !'
-            }))
-
-            .then(() => bcSdk.addDocument({
-             
-                updatedetails: newDoc
             }))
 
             .catch(err => {

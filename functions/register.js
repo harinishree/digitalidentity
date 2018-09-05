@@ -1,36 +1,51 @@
 'use strict';
 
-const user = require('../models/user');
+// const user = require('../models/user');
 var bcSdk = require('../fabcar/invoke');
 
 
 
-exports.registerUser = (email, password, rapidID,userObject,usertype) =>
+exports.registerUser = (email, password, rapidID,userObject,usertype) => {
 
-    new Promise((resolve, reject) => {
-        var transactionString = {
+
+  return new Promise((resolve, reject) => {
+
+        var transactionstring = {
             email: email,
             password: password,
             userObject:userObject,
-             usertype :usertype,
+             usertype:usertype,
             created_at: new Date(),
         }
 
-        const newUser = new user({
+        // const newUser = new user({
+        //     rapidID: rapidID,
+        //     transactionstring:transactionstring 
+        // });
+
+        var newUser = {
             rapidID: rapidID,
             transactionstring:transactionstring 
-        });
+        }
         
-        newUser.save()
+        // newUser.save()
+        bcSdk.createUser({
+            TransactionDetails: newUser
+        })
+        
+        // .then((result) => 
+        // bcSdk.createUser({
+        //     TransactionDetails: newUser
+        // }))
 
-            .then(() => resolve({
+            .then((result) =>
+            
+              resolve({
                 status: 201,
-                message: 'User Registered Sucessfully !'
+                message: 'User Registered Sucessfully !',
+               
             }))
-
-            .then(() => bcSdk.createUser({
-                TransactionDetails: newUser
-            }))
+           
 
             .catch(err => {
 
@@ -48,5 +63,9 @@ exports.registerUser = (email, password, rapidID,userObject,usertype) =>
                         message: 'Internal Server Error !'
                     });
                 }
-            });
+            })    
     });
+
+}
+
+

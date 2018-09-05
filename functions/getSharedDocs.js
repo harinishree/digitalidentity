@@ -20,7 +20,7 @@ exports.getSharedDocs = (rapidID) => {
 
             .then((userdocs) => {
                  var docs2 = [];
-             
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
                 var shareLedgerData = userdocs.body.sharedwithme
                 console.log(shareLedgerData);
                var userkeys =Object.keys(shareLedgerData)

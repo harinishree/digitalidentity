@@ -17,7 +17,7 @@ var options = {
     wallet_path: path.join(__dirname, './creds'),
     user_id: 'PeerAdmin',
     channel_id: 'mychannel',
-    chaincode_id: 'digitalidentitychaincode1',
+    chaincode_id: 'digitalidentitychaincode2',
     peer_url: 'grpc://localhost:7051',
     event_url: 'grpc://localhost:7053',
     orderer_url: 'grpc://localhost:7050'
@@ -29,9 +29,10 @@ var targets = [];
 var tx_id = null;
 
 function createUser(params) {
+
     var TransactionDetails;
 
-    Promise.resolve().then(() => {
+   Promise.resolve().then(() => {
         console.log("Create a client and set the wallet location");
         client = new hfc();
         return hfc.newDefaultKeyValueStore({
@@ -54,7 +55,8 @@ function createUser(params) {
         return;
     }).then(() => {
         TransactionDetails = params.TransactionDetails;
-        console.log("userId123...>>>>",TransactionDetails.rapidID)
+        var userId = TransactionDetails.rapidID;
+        console.log("userId123...>>>>",userId)
         var str = JSON.stringify(TransactionDetails.transactionstring)
         console.log("line number  58---->", str);
         tx_id = client.newTransactionID();
@@ -66,13 +68,14 @@ function createUser(params) {
             targets: targets,
             chaincodeId: options.chaincode_id,
             fcn: 'newRequest',
-            args: [TransactionDetails.rapidID,str],
+            args: [userId,str],
             chainId: options.channel_id,
             txId: tx_id
         };
         return channel.sendTransactionProposal(request);
     }).then((results) => {
 
+        console.log("resultshari123",results)
         var proposalResponses = results[0];
        
         var proposal = results[1];
@@ -214,6 +217,7 @@ function addDocument(params) {
         };
         return channel.sendTransactionProposal(request);
     }).then((results) => {
+        console.log("resultharisri",results);
         var proposalResponses = results[0];
         var proposal = results[1];
         var header = results[2];
@@ -309,6 +313,8 @@ function addDocument(params) {
         });
 
 }
+
+
 function shareDocument(params) {
     var shareddetails;
 
@@ -476,9 +482,11 @@ function revokeAccess(params) {
     }).then(() => {
         revokeAccess = params.revokeAccess;
         console.log("revokeAccess", params.revokeAccess);
-        var str = JSON.stringify(revokeAccess.transactionstring)
-        console.log("line number  58---->", str);
+        // var str = JSON.stringify(revokeAccess.transactionstring)
+        // console.log("line number  58---->", str);
         console.log("lkslkalkslk----->",revokeAccess.rapidID)
+        console.log("revokeAccess----->",revokeAccess.rapid_doc_ID)
+        console.log("revokeAccessorgID----->",revokeAccess.orgID)
         tx_id = client.newTransactionID();
         console.log("Assigning transaction_id: ", tx_id._transaction_id);
         // createCar - requires 5 args, ex: args: ['CAR11', 'Honda', 'Accord', 'Black', 'Tom'],
@@ -487,8 +495,10 @@ function revokeAccess(params) {
         var request = {
             targets: targets,
             chaincodeId: options.chaincode_id,
-            fcn: 'updateRequest',
-            args: [revokeAccess.rapidID, str],
+            fcn: 'revokeAccess',
+            args: [revokeAccess.rapidID,
+                revokeAccess.orgID,
+                revokeAccess.rapid_doc_ID],
             chainId: options.channel_id,
             txId: tx_id
         };

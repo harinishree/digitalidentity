@@ -13,7 +13,7 @@ var options = {
     wallet_path: path.join(__dirname, './creds'),
     user_id: 'PeerAdmin',
     channel_id: 'mychannel',
-    chaincode_id: 'digitalidentitychaincode1',
+    chaincode_id: 'digitalidentitychaincode2',
     network_url: 'grpc://localhost:7051'
 };
 var channel = {};

@@ -1,26 +1,23 @@
 'use strict';
 
 const users = "risabh.s";
-var bcSdk = require('../src/blockchain/blockchain_sdk');
+// var bcSdk = require('../src/blockchain/blockchain_sdk');
+var bcSdk = require('../fabcar/invoke');
 
 exports.revokeAccess = (rapidID, rapid_doc_ID, orgID) =>
 
     new Promise((resolve, reject) => {
 
-        var transactionstring = {
-            rapid_doc_ID: rapid_doc_ID,
-            orgID: orgID
-        }
 
         const revokeAccess = ({
 
             rapidID: rapidID,
-            transactionstring:transactionstring
+            rapid_doc_ID: rapid_doc_ID,
+            orgID: orgID
 
         })
 
         bcSdk.revokeAccess({
-
                 revokeAccess: revokeAccess
             })
 

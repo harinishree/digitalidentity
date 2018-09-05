@@ -3,7 +3,7 @@
 var userss = "risabh.s";
 const doc = require('../models/doc');
 const user = require('../models/user');
-const bcSdk = require('../src/blockchain/blockchain_sdk');
+// const bcSdk = require('../src/blockchain/blockchain_sdk');
 var ownsLedgerData = [];
 var docArray = [];
 
