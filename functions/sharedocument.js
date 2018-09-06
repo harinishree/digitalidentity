@@ -1,26 +1,23 @@
 'use strict';
 
 const users = "risabh.s";
-var bcSdk = require('../fabcar/invoke');
+var bcSdk = require('../src/blockchain/blockchain_sdk');
+
 exports.shareDocument = (rapidID, rapid_doc_ID, orgID) =>
 
     new Promise((resolve, reject) => {
-
-        var transactionstring = {
-            rapid_doc_ID: rapid_doc_ID,
-            orgID: orgID
-        }
 
 
         const shareDoc = ({
 
             rapidID: rapidID,
-            transactionstring:transactionstring
+            rapid_doc_ID: rapid_doc_ID,
+            orgID: orgID
 
         })
 
         bcSdk.shareDocument({
-                
+                user: users,
                 sharedDocDetails: shareDoc
             })
 

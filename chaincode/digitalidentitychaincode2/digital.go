@@ -83,8 +83,8 @@ type User struct {
          return t.createUser(APIstub, args)
      case "addDocument":
          return t.addDocument(APIstub, args)
-    //  case "shareDocument":
-    //      return t.shareDocument(APIstub, args)
+     case "shareDocument":
+         return t.shareDocument(APIstub, args)
      case "getMydocs":
          return t.getMydocs(APIstub, args)
     case "revokeAccess":
@@ -105,7 +105,6 @@ type User struct {
 
 	var userid = args[0]
 	var userinfo = `{"owns":[],"mymap":{}, "audit":{}}`
-
 	err := APIstub.PutState(userid, []byte(userinfo))
 	if err != nil {
 		fmt.Println("Could not save user to ledger")
@@ -152,86 +151,86 @@ func (t *SimpleChaincode) addDocument(APIstub shim.ChaincodeStubInterface, args 
 
 }
  //3. shareDocument()    (#doc,#user, #org)  Invoke
-// func (t *SimpleChaincode) shareDocument(APIstub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-// 	fmt.Println("Entering shareDocument")
-// 	var user User
-// 	var org User
-// 	//	var doc DocumentInfo
-// 	//fmt.Println(doc)
-// 	if len(args) < 2 {
-// 		fmt.Println("Expecting three Argument")
-// 		return shim.Error("Expected at least three arguments for sharing  a document")
-// 	}
+func (t *SimpleChaincode) shareDocument(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+	fmt.Println("Entering shareDocument")
+	var user User
+	var org User
+	//	var doc DocumentInfo
+	//fmt.Println(doc)
+	if len(args) < 2 {
+		fmt.Println("Expecting three Argument")
+		return shim.Error("Expected at least three arguments for sharing  a document")
+	}
 
-// 	var userid = args[0]
-// 	var docid = args[1]
-// 	var orgid = args[2]
-// 	//fetching the user
-// 	userbytes, err := APIstub.GetState(userid)
-// 	if err != nil {
-// 		fmt.Println("could not fetch user", err)
-// 		return shim.Error("could not fetch user")
-// 	}
-// 	err = json.Unmarshal(userbytes, &user)
-// 	if err != nil {
-// 		fmt.Println("unable to unmarshal user data")
-// 		return shim.Error("unable to unmarshal user data")
-// 	}
-// 	if !contains(user.Owns, docid) {
-// 		fmt.Println("docment doesnt exists")
-// 		return shim.Error("docment doesnt exists")
-// 	}
-// 	//fetch oraganisation
-// 	orgbytes, err := APIstub.GetState(orgid)
-// 	if err != nil {
-// 		fmt.Println("could not fetch user", err)
-// 		return shim.Error("could not fetch user")
-// 	}
-// 	err = json.Unmarshal(orgbytes, &org)
-// 	if err != nil {
-// 		fmt.Println("unable to unmarshal org data")
-// 		return shim.Error("unable to unmarshal org data")
-// 	}
+	var userid = args[0]
+	var docid = args[1]
+	var orgid = args[2]
+	//fetching the user
+	userbytes, err := APIstub.GetState(userid)
+	if err != nil {
+		fmt.Println("could not fetch user", err)
+		return shim.Error("could not fetch user")
+	}
+	err = json.Unmarshal(userbytes, &user)
+	if err != nil {
+		fmt.Println("unable to unmarshal user data")
+		return shim.Error("unable to unmarshal user data")
+	}
+	if !contains(user.Owns, docid) {
+		fmt.Println("docment doesnt exists")
+		return shim.Error("docment doesnt exists")
+	}
+	//fetch oraganisation
+	orgbytes, err := APIstub.GetState(orgid)
+	if err != nil {
+		fmt.Println("could not fetch user", err)
+		return shim.Error("could not fetch user")
+	}
+	err = json.Unmarshal(orgbytes, &org)
+	if err != nil {
+		fmt.Println("unable to unmarshal org data")
+		return shim.Error("unable to unmarshal org data")
+	}
 
-// 	if org.SharedwithMe == nil {
-// 		org.SharedwithMe = make(map[string][]string)
-// 	}
+	if org.SharedwithMe == nil {
+		org.SharedwithMe = make(map[string][]string)
+	}
 
-// 	if user.Auditrail == nil {
-// 		user.Auditrail = make(map[string][]string)
+	if user.Auditrail == nil {
+		user.Auditrail = make(map[string][]string)
 
-// 	}
-// 	//adding the document if it doesnt exists already
-// 	if !contains(org.SharedwithMe[userid], docid) {
-// 		timestamp := makeTimestamp()
-// 		fmt.Println(timestamp)
-// 		//---------------Sharing the doc to Organisation-----------------------
-// 		org.SharedwithMe[userid] = append(org.SharedwithMe[userid], docid)
+	}
+	//adding the document if it doesnt exists already
+	if !contains(org.SharedwithMe[userid], docid) {
+		timestamp := makeTimestamp()
+		fmt.Println(timestamp)
+		//---------------Sharing the doc to Organisation-----------------------
+		org.SharedwithMe[userid] = append(org.SharedwithMe[userid], docid)
 
-// 		//-------------- Adding time stamp to user audit trail array-------------
-// 		user.Auditrail[orgid] = append(user.Auditrail[orgid], timestamp)
-// 		user.Auditrail[orgid] = append(user.Auditrail[orgid], docid)
-// 	}
+		//-------------- Adding time stamp to user audit trail array-------------
+		user.Auditrail[orgid] = append(user.Auditrail[orgid], timestamp)
+		user.Auditrail[orgid] = append(user.Auditrail[orgid], docid)
+	}
 
-// 	_, err = writeIntoBlockchain(orgid, org, APIstub)
-// 	if err != nil {
-// 		fmt.Println("Could not save org Info", err)
-// 		return shim.Error("Could not save org Info")
-// 	}
+	_, err = writeIntoBlockchain(orgid, org, APIstub)
+	if err != nil {
+		fmt.Println("Could not save org Info", err)
+		return shim.Error("Could not save org Info")
+	}
 
-// 	_, err = writeIntoBlockchain(userid, user, APIstub)
-// 	if err != nil {
-// 		fmt.Println("Could not save user Info", err)
-// 		return shim.Error("Could not save user Info")
-// 	}
+	_, err = writeIntoBlockchain(userid, user, APIstub)
+	if err != nil {
+		fmt.Println("Could not save user Info", err)
+		return shim.Error("Could not save user Info")
+	}
 
-// 	fmt.Println("Successfully shared the doc")
-// 	return shim.Success("Successfully shared the doc")
+	fmt.Println("Successfully shared the doc")
+	return shim.Success(nil)
 
-// }
+}
  
 //4. getMydocs()    (#user) Query
-func (t *SimpleChaincode) getMydocs(APIstub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) getMydocs(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 	fmt.Println("Entering get my docs")
 
 	if len(args) < 1 {
@@ -245,7 +244,7 @@ func (t *SimpleChaincode) getMydocs(APIstub shim.ChaincodeStubInterface, args []
 		fmt.Println("Could not user info", err)
 		return shim.Error("Error")
 	}
-	return idasbytes, nil
+	return shim.Success(idasbytes)
 }
 
  func (t *SimpleChaincode) revokeAccess(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
@@ -301,6 +300,16 @@ func (t *SimpleChaincode) getMydocs(APIstub shim.ChaincodeStubInterface, args []
          fmt.Printf("Error creating new Smart Contract: %s", err)
      }
  }
+
+ func contains(slice []string, item string) bool {
+	set := make(map[string]struct{}, len(slice))
+	for _, s := range slice {
+		set[s] = struct{}{}
+	}
+
+	_, ok := set[item]
+	return ok
+}
 
  func writeIntoBlockchain(key string, value User, stub shim.ChaincodeStubInterface) ([]byte, error) {
 	bytes, err := json.Marshal(&value)

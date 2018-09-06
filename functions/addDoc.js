@@ -1,42 +1,35 @@
 'use strict';
 
-// const doc = require('../models/doc');
-var bcSdk = require('../fabcar/invoke');
+const doc = require('../models/doc');
+const users = "risabh.s";
+// var bcSdk = require('../src/blockchain/blockchain_sdk');
+
 
 exports.addDoc = (docType, docNo, rapid_doc_ID, rapidID, docinfo) =>
 
     new Promise((resolve, reject) => {
 
-        var transactionstring = {
+
+        const newDoc = new doc({
             docType: docType,
             docNo: docNo,
+            rapidID: rapidID,
             rapid_doc_ID: rapid_doc_ID,
             docinfo: docinfo
-        }
+        })
 
-        // const newDoc = new doc({
-
-        //     rapidID: rapidID,
-        //     transactionstring:transactionstring
-            
-        // })
-
-        var newDoc = {
-            rapidID: rapidID,
-            transactionstring:transactionstring  
-        }
-
-        // newDoc.save()
+        newDoc.save()
 
 
-            bcSdk.addDocument
-            ({
-             
-                updatedetails: newDoc
-            })
+
             .then(() => resolve({
                 status: 201,
                 message: 'User Sucessfully added doccument !'
+            }))
+
+            .then(() => bcSdk.addDocument({
+                user: users,
+                docDetails: newDoc
             }))
 
             .catch(err => {

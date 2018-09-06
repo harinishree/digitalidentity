@@ -1,7 +1,8 @@
 'use strict';
 
 const doc = require('../models/doc')
-var bcSdk = require('../fabcar/invoke');
+var bcSdk = require('../src/blockchain/blockchain_sdk');
+const users = 'risabh.s';
 const request = require('../models/request');
 
 
@@ -28,17 +29,13 @@ exports.approvedReject = (rapidID, OrgID, status, docTypes) => {
                         var doc1 = docs[i].rapid_doc_ID;
                         console.log(doc1);
                         var rapid_doc_ID = doc1;
-                        var transactionstring = {
-                            
-                            "rapid_doc_ID": doc1,
-                            "OrgID": OrgID,
-                            "status": status
-                        }
 
                           sharedDocDetails = {
 
                             "rapidID": rapidID,
-                            "transactionstring":transactionstring
+                            "rapid_doc_ID": doc1,
+                            "OrgID": OrgID,
+                            "status": status
 
                         };
                     }
@@ -46,7 +43,7 @@ exports.approvedReject = (rapidID, OrgID, status, docTypes) => {
                     console.log(i + "calling sdk" + JSON.stringify(sharedDocDetails))
 
                     bcSdk.shareDocument({
-                
+                            user: users,
                             sharedDocs: sharedDocDetails
                         }).then((Sdkresponse) => {
                             console.log(counter)

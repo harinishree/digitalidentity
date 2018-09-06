@@ -2,7 +2,7 @@
 'use strict';
 var user = "risabh.s";
 const doc = require('../models/doc');
-var bcSdk = require('../fabcar/query');
+const bcSdk = require('../src/blockchain/blockchain_sdk');
 var ownsLedgerData = [];
 var docArray = [];
 
@@ -12,7 +12,7 @@ exports.fetchUsersdocs = (rapidID) => {
     return new Promise((resolve, reject) => {
 
         bcSdk.getMydocs({
-                
+                user: user,
                 rapidID: rapidID
             })
 

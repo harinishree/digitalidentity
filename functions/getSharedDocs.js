@@ -2,8 +2,7 @@
 'use strict';
 var user = "risabh.s";
 const doc = require('../models/doc');
-var bcSdk = require('../fabcar/query');
-
+const bcSdk = require('../src/blockchain/blockchain_sdk');
 var ownsLedgerData = [];
 var sharedDocs = [];
 
@@ -12,7 +11,7 @@ exports.getSharedDocs = (rapidID) => {
     return new Promise((resolve, reject) => {
 
         bcSdk.getSharedDocs({
-                
+                user: user,
                 rapidID: rapidID
             })
 
@@ -20,7 +19,7 @@ exports.getSharedDocs = (rapidID) => {
 
             .then((userdocs) => {
                  var docs2 = [];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+             
                 var shareLedgerData = userdocs.body.sharedwithme
                 console.log(shareLedgerData);
                var userkeys =Object.keys(shareLedgerData)
@@ -62,6 +61,12 @@ exports.getSharedDocs = (rapidID) => {
                         }) 
             })
             })
+                        
+           
+                            
+                     
+    
+
             .catch(err => {
 
                 console.log("error occurred" + err);

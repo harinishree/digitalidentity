@@ -1,51 +1,38 @@
 'use strict';
 
-// const user = require('../models/user');
-var bcSdk = require('../fabcar/invoke');
+const user = require('../models/user');
+var bcSdk = require('../src/blockchain/blockchain_sdk');
+const users = 'risabh.s';
 
 
+exports.registerUser = (email, password, rapidID,userObject,usertype) =>
 
-exports.registerUser = (email, password, rapidID,userObject,usertype) => {
+    new Promise((resolve, reject) => {
 
+        const newUser = new user({
 
-  return new Promise((resolve, reject) => {
-
-        var transactionstring = {
+         
             email: email,
             password: password,
-            userObject:userObject,
-             usertype:usertype,
-            created_at: new Date(),
-        }
-
-        // const newUser = new user({
-        //     rapidID: rapidID,
-        //     transactionstring:transactionstring 
-        // });
-
-        var newUser = {
             rapidID: rapidID,
-            transactionstring:transactionstring 
-        }
-        
-        // newUser.save()
-        bcSdk.createUser({
-            TransactionDetails: newUser
-        })
-        
-        // .then((result) => 
-        // bcSdk.createUser({
-        //     TransactionDetails: newUser
-        // }))
+            userObject:userObject,
+             usertype :usertype,
+            created_at: new Date(),
+        });
+        newUser.save()
 
-            .then((result) =>
-            
-              resolve({
+
+
+
+            .then(() => resolve({
                 status: 201,
-                message: 'User Registered Sucessfully !',
-               
+                message: 'User Registered Sucessfully !'
             }))
-           
+
+            .then(() => bcSdk.createUser({
+                user: users,
+                UserDetails: newUser
+            }))
 
             .catch(err => {
 
@@ -63,9 +50,5 @@ exports.registerUser = (email, password, rapidID,userObject,usertype) => {
                         message: 'Internal Server Error !'
                     });
                 }
-            })    
+            });
     });
-
-}
-
-

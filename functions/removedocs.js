@@ -1,7 +1,6 @@
 'use strict';
 
-// var bcSdk = require('../src/blockchain/blockchain_sdk');
-var bcSdk = require('../fabcar/query');
+var bcSdk = require('../src/blockchain/blockchain_sdk');
 const user = 'risabh.s';
 const doc = require('../models/doc');
 

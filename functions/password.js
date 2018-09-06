@@ -4,7 +4,7 @@ const user = require('../models/user');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const randomstring = require("randomstring");
-// const config = require('../config/config.json');
+const config = require('../config/config.json');
 
 exports.changePassword = (email, pin, newPin) =>
 
