@@ -13,7 +13,7 @@ var options = {
     wallet_path: path.join(__dirname, './creds'),
     user_id: 'PeerAdmin',
     channel_id: 'mychannel',
-    chaincode_id: 'digitalidentitychaincode2',
+    chaincode_id: 'digitalidentitychaincode7',
     network_url: 'grpc://localhost:7051'
 };
 var channel = {};
@@ -103,7 +103,7 @@ function getSharedDocs(params) {
             const request = {
                 chaincodeId: options.chaincode_id,
                 txId: transaction_id,
-                fcn: "readRequest",    
+                fcn: "getMydocs",    
                args: [userId]
             };
             return channel.queryByChaincode(request);

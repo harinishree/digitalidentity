@@ -3,16 +3,16 @@
 var user = "risabh.s";
 const doc = require('../models/doc');
 // const bcSdk = require('../src/blockchain/blockchain_sdk');
+
 var ownsLedgerData = [];
 var docArray = [];
-
-
+var bcSdk = require('../fabcar/query');
 
 exports.fetchUsersdocs = (rapidID) => {
     return new Promise((resolve, reject) => {
 
         bcSdk.getMydocs({
-                user: user,
+               
                 rapidID: rapidID
             })
 
@@ -20,7 +20,8 @@ exports.fetchUsersdocs = (rapidID) => {
 
             .then((userdocs) => {
 
-                ownsLedgerData = userdocs.body.owns
+                ownsLedgerData = userdocs.owns
+                console.log("userdocs123456",ownsLedgerData)
 
             //    for (let i = 0; i < ownsLedgerData.length; i++) {
                     doc.find({
