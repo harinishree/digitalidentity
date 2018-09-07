@@ -2,7 +2,7 @@
 'use strict';
 var user = "risabh.s";
 const doc = require('../models/doc');
-const bcSdk = require('../src/blockchain/blockchain_sdk');
+// const bcSdk = require('../src/blockchain/blockchain_sdk');
 var ownsLedgerData = [];
 var docArray = [];
 

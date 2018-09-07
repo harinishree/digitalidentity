@@ -3,7 +3,7 @@
 var userss = "risabh.s";
 const doc = require('../models/doc');
 const user = require('../models/user');
-const bcSdk = require('../src/blockchain/blockchain_sdk');
+// const bcSdk = require('../src/blockchain/blockchain_sdk');
 var ownsLedgerData = [];
 var docArray = [];
 
@@ -53,8 +53,8 @@ exports.auditUser = (rapidID) => {
                         }      
                         }
                         }
-                        console.log("timestamps            "+timestamps);        
-                        console.log("rapiddocIDs           "+ rapiddocIDs);
+                        console.log("timestamps"+timestamps);        
+                        console.log("rapiddocIDs"+ rapiddocIDs);
                            const docids = rapiddocIDs
                            console.log(docids)
                            console.log(docids.length)

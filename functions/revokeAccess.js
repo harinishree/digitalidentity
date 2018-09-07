@@ -1,7 +1,8 @@
 'use strict';
 
 const users = "risabh.s";
-var bcSdk = require('../src/blockchain/blockchain_sdk');
+// var bcSdk = require('../src/blockchain/blockchain_sdk');
+var bcSdk = require('../fabcar/invoke');
 
 exports.revokeAccess = (rapidID, rapid_doc_ID, orgID) =>
 

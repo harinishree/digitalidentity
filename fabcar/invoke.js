@@ -17,7 +17,7 @@ var options = {
     wallet_path: path.join(__dirname, './creds'),
     user_id: 'PeerAdmin',
     channel_id: 'mychannel',
-    chaincode_id: 'digitalidentitychaincode2',
+    chaincode_id: 'digitalidentitychaincode3',
     peer_url: 'grpc://localhost:7051',
     event_url: 'grpc://localhost:7053',
     orderer_url: 'grpc://localhost:7050'
@@ -54,11 +54,11 @@ function createUser(params) {
         targets.push(peerObj);
         return;
     }).then(() => {
-        TransactionDetails = params.TransactionDetails;
+        TransactionDetails = params.UserDetails;
         var userId = TransactionDetails.rapidID;
         console.log("userId123...>>>>",userId)
-        var str = JSON.stringify(TransactionDetails.transactionstring)
-        console.log("line number  58---->", str);
+        // var str = JSON.stringify(TransactionDetails.transactionstring)
+        // console.log("line number  58---->", str);
         tx_id = client.newTransactionID();
         console.log("Assigning transaction_id: ", tx_id._transaction_id);
         // createCar - requires 5 args, ex: args: ['CAR11', 'Honda', 'Accord', 'Black', 'Tom'],
@@ -67,8 +67,8 @@ function createUser(params) {
         var request = {
             targets: targets,
             chaincodeId: options.chaincode_id,
-            fcn: 'newRequest',
-            args: [userId,str],
+            fcn: 'createUser',
+            args: [userId],
             chainId: options.channel_id,
             txId: tx_id
         };
@@ -197,10 +197,10 @@ function addDocument(params) {
         targets.push(peerObj);
         return;
     }).then(() => {
-        updatedetails = params.updatedetails;
-        console.log("updatedetails", params.updatedetails);
-        var str = JSON.stringify(updatedetails.transactionstring)
-        console.log("line number  58---->", str);
+        updatedetails = params.docDetails;
+        console.log("updatedetails", params.docDetails);
+        // var str = JSON.stringify(updatedetails.transactionstring)
+        // console.log("line number  58---->", str);
         console.log("lkslkalkslk----->",updatedetails.rapidID)
         tx_id = client.newTransactionID();
         console.log("Assigning transaction_id: ", tx_id._transaction_id);
@@ -210,8 +210,8 @@ function addDocument(params) {
         var request = {
             targets: targets,
             chaincodeId: options.chaincode_id,
-            fcn: 'updateRequest',
-            args: [updatedetails.rapidID, str],
+            fcn: 'addDocument',
+            args: [updatedetails.rapidID, updatedetails.rapid_doc_ID],
             chainId: options.channel_id,
             txId: tx_id
         };
@@ -342,8 +342,8 @@ function shareDocument(params) {
     }).then(() => {
         shareddetails = params.sharedDocs;
         console.log("shareddetails", params.sharedDocs);
-        var str = JSON.stringify(shareddetails.transactionstring)
-        console.log("line number  58---->", str);
+        // var str = JSON.stringify(shareddetails.transactionstring)
+        // console.log("line number  58---->", str);
         console.log("lkslkalkslk----->",shareddetails.rapidID)
         tx_id = client.newTransactionID();
         console.log("Assigning transaction_id: ", tx_id._transaction_id);
@@ -353,8 +353,10 @@ function shareDocument(params) {
         var request = {
             targets: targets,
             chaincodeId: options.chaincode_id,
-            fcn: 'updateRequest',
-            args: [shareddetails.rapidID, str],
+            fcn: 'shareDocument',
+            args: [shareddetails.rapidID,
+                shareddetails.rapid_doc_ID,
+                shareddetails.OrgID],
             chainId: options.channel_id,
             txId: tx_id
         };
@@ -496,7 +498,8 @@ function revokeAccess(params) {
             targets: targets,
             chaincodeId: options.chaincode_id,
             fcn: 'revokeAccess',
-            args: [revokeAccess.rapidID,
+            args: [
+                revokeAccess.rapidID,
                 revokeAccess.orgID,
                 revokeAccess.rapid_doc_ID],
             chainId: options.channel_id,

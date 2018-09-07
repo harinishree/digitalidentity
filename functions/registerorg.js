@@ -1,7 +1,7 @@
 'use strict';
 
 const user = require('../models/user');
-var bcSdk = require('../src/blockchain/blockchain_sdk');
+// var bcSdk = require('../src/blockchain/blockchain_sdk');
 const users = 'risabh.s';
 
 
