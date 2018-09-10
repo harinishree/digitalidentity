@@ -130,9 +130,10 @@ module.exports = router => {
     
     router.post('/registerUser', cors(), (req, res) => {
 
+        console.log("UI",req.body);
         const email = req.body.email;
         console.log(email);
-        const password = req.body.password;
+        const password = req.body.pin;
         console.log(password);
         const rapidID = crypto.createHash('sha256').update(email).digest('base64');
           console.log(rapidID);
@@ -370,8 +371,9 @@ module.exports = router => {
       
     });
     
-/*
+
     router.post('/registerOrg', cors(), (req, res) => {
+        console.log("UI",req.body);
 
         const orgname = req.body.orgname;
         const email = req.body.email;
@@ -405,7 +407,7 @@ module.exports = router => {
             }));
         }
     });
-    */
+    
     router.post('/addDoc', cors(), (req, res) => {
 
             console.log("entering in to the addDoc")

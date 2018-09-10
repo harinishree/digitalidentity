@@ -2,6 +2,7 @@
 
 const user = require('../models/user');
 // var bcSdk = require('../src/blockchain/blockchain_sdk');
+var bcSdk = require('../fabcar/invoke');
 const users = 'risabh.s';
 
 
@@ -22,12 +23,13 @@ exports.registerOrg = (orgname, email, orgcontact, pin, rapidID) =>
         newUser.save()
 
             .then(() => resolve({
+                
                 status: 201,
                 message: 'User Registered Sucessfully !'
             }))
 
             .then(() => bcSdk.createUser({
-                user: users,
+                
                 UserDetails: newUser
             }))
 
