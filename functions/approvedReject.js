@@ -2,6 +2,7 @@
 
 const doc = require('../models/doc')
 // var bcSdk = require('../src/blockchain/blockchain_sdk');
+var bcSdk = require('../fabcar/invoke');
 const users = 'risabh.s';
 const request = require('../models/request');
 
@@ -43,7 +44,7 @@ exports.approvedReject = (rapidID, OrgID, status, docTypes) => {
                     console.log(i + "calling sdk" + JSON.stringify(sharedDocDetails))
 
                     bcSdk.shareDocument({
-                            user: users,
+                            
                             sharedDocs: sharedDocDetails
                         }).then((Sdkresponse) => {
                             console.log(counter)

@@ -12,13 +12,15 @@ const userSchema = mongoose.Schema({
     usertype : String,
     created_at: String,
     userObject : Object,
+    orgname: String,
+    orgcontact: String,
     transactionstring: Object
 
 });
 
 
 mongoose.Promise = global.Promise;
-//mongoose.connect('mongodb://localhost:27017/digitalId', { useMongoClient: true });
+// mongoose.connect('mongodb://localhost:27017/digitalId', { useMongoClient: true });
 
 mongoose.connect('mongodb://harini:Harini!96@ds119406.mlab.com:19406/mortgage', {
     useMongoClient: true

@@ -15,6 +15,8 @@ mongoose.Promise = global.Promise;
 // connect to mongo
 //mongoose.connect('mongodb://localhost:27017/digitalId', { useMongoClient: true });
 // mongoose.connect('mongodb://rpqb:rpqb123@ds131583.mlab.com:31583/digitalid', { useMongoClient: true });
-
+mongoose.connect('mongodb://harini:Harini!96@ds119406.mlab.com:19406/mortgage', {
+    useMongoClient: true
+});
 // our model
 module.exports = mongoose.model('img', ImageSchema);

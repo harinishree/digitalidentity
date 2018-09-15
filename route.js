@@ -16,7 +16,7 @@ const registerOrg = require('./functions/registerorg');
 const login = require('./functions/login');
 const profile = require('./functions/profile');
 const password = require('./functions/password');
-// const config = require('./config/config.json');
+const config = require('./config/config.json');
 const user = require('./models/user');
 const fetchUsersdocs = require('./functions/fetchUserdocs');
 const shareDocument = require('./functions/sharedocument');
@@ -40,10 +40,11 @@ module.exports = router => {
 
 
     router.post('/login', cors(), (req, res) => {
+        console.log("UI",req.body);
 
         const email = req.body.email;
 
-        const password = req.body.password;
+        const password = req.body.pin;
 
 
         if (!email) {
@@ -59,8 +60,7 @@ module.exports = router => {
 
             .then(result => {
 
-
-
+                console.log("result123",result)
          //      if ('orgname' in result.users._doc) {
 
                     const token = jwt.sign(result, config.secret, {
@@ -71,7 +71,7 @@ module.exports = router => {
                     res.status(result.status).json({
                         message: result.message,
                         token: token,
-                       userObject:result.users[0]
+                       users:result.users
                     });
 
                /* } else {
@@ -139,7 +139,7 @@ module.exports = router => {
           console.log(rapidID);
         const userObject = req.body.userObject;
           console.log(userObject);
-        const usertype = req.body.usertype;
+        const usertype = "user";
           console.log(usertype);
 
         if (!email || !password || !usertype) {
@@ -216,10 +216,12 @@ module.exports = router => {
 
     router.post('/approveReject', (req, res) => {
      
+        console.log("Ui",req.body);  
         const rapidID = getrapidID(req);
         const docTypes = req.body.docTypes;
-       const OrgID = req.body.OrgID.text;
-       //  const OrgID = req.body.OrgID;
+    //    const OrgID = req.body.OrgID.text;
+        const OrgID = req.body.OrgID;
+        console.log("ORGID",OrgID)
         const status = req.body.status;
           //token validation
         if (!checkToken(req)) {
@@ -378,11 +380,13 @@ module.exports = router => {
         const orgname = req.body.orgname;
         const email = req.body.email;
         const orgcontact = req.body.orgcontact;
-        const pin = req.body.pin;
+        const password = req.body.pin;
         const rapidID = crypto.createHash('sha256').update(email.concat(orgcontact)).digest('base64');
+        const usertype = "organisation";
+          console.log(usertype);
+        
 
-
-        if (!orgname || !email || !pin || !orgcontact || !rapidID || !orgname.trim() || !email.trim() || !pin.trim() || !orgcontact.trim()) {
+        if (!orgname || !email || !password || !orgcontact || !rapidID || !orgname.trim() || !email.trim() || !password.trim() || !orgcontact.trim()) {
 
             res.status(400).json({
                 message: 'Invalid Request !'
@@ -390,7 +394,7 @@ module.exports = router => {
 
         } else {
 
-            registerOrg.registerOrg(orgname, email, orgcontact, pin, rapidID)
+            registerOrg.registerOrg(orgname, email, orgcontact, password, rapidID,usertype)
 
             .then(result => {
 
@@ -411,19 +415,21 @@ module.exports = router => {
     router.post('/addDoc', cors(), (req, res) => {
 
             console.log("entering in to the addDoc")
+            console.log("UI",req.body);
             const docType = req.body.docType;
             const docNo = req.body.docNo;
             const rapid_doc_ID = crypto.createHash('sha256').update(docNo).digest('base64');
-            // const rapidID = getrapidID(req);
-            const rapidID = req.body.rapidID;
+            const rapidID = getrapidID(req);
+            console.log("rapidID",rapidID)
+            // const rapidID = req.body.rapidID;
             const docinfo = req.body.docinfo;
             
-        //      if (!checkToken(req)) {
-        //     console.log("invalid token")
-        //     return res.status(401).json({
-        //         message: "invalid token"
-        //     })
-        // }
+             if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
 
              if (!docType||!docNo||!rapidID) {
             console.log(" invalid body ")
@@ -454,23 +460,21 @@ module.exports = router => {
 
     router.get('/getMydocs', cors(), (req, res) => {
         //token validation
-        // if (!checkToken(req)) {
-        //     console.log("invalid token")
-        //     return res.status(401).json({
-        //         message: "invalid token"
-        //     })
-        // }
-        //     const rapidID = getrapidID(req);
+        if (!checkToken(req)) {
+            console.log("invalid token")
+            return res.status(401).json({
+                message: "invalid token"
+            })
+        }
+            const rapidID = getrapidID(req);
 
-        //         if (!rapidID) {
-        //         console.log("invalid json input")
-        //         return res.status(400).json({
-        //         message: 'invalid user,token not valid or found'
-        //         })
-        //         }
+                if (!rapidID) {
+                console.log("invalid json input")
+                return res.status(400).json({
+                message: 'invalid user,token not valid or found'
+                })
+                }
 
-                const rapidID = req.query.rapidID;
-                console.log("rapidid",rapidID)
                 fetchUsersdocs.fetchUsersdocs(rapidID)
 
                 .then(result => {
@@ -533,6 +537,7 @@ module.exports = router => {
         }
             const rapidID = getrapidID(req);
             const rapid_doc_ID1 = req.body.rapid_doc_ID;
+            console.log("rapid_doc_ID1",rapid_doc_ID1);
             const rapid_doc_ID = crypto.createHash('sha256').update(rapid_doc_ID1).digest('base64');
            
             if (!rapidID || !rapid_doc_ID) {
@@ -758,7 +763,7 @@ module.exports = router => {
             try {
 
                 var decoded = jwt.verify(token, config.secret);
-                return decoded.users.rapidID;
+                return decoded.users[0].rapidID;
 
 
             } catch (err) {
@@ -781,7 +786,7 @@ module.exports = router => {
             try {
 
                 var decoded = jwt.verify(token, config.secret);
-                var orgname = decoded.users.orgname;
+                var orgname = decoded.users[0].orgname;
                 // var rapidID = decoded.users.rapidID;
 
                 return orgname
@@ -806,7 +811,7 @@ module.exports = router => {
             try {
 
                 var decoded = jwt.verify(token, config.secret);
-                var email = decoded.users.email;
+                var email = decoded.users[0].email;
 
 
                 return email

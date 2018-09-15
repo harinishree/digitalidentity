@@ -1,6 +1,6 @@
 'use strict';
 
-// const user = require('../models/user');
+const user = require('../models/user');
 // var bcSdk = require('../src/blockchain/blockchain_sdk');
 var bcSdk = require('../fabcar/invoke');
 // const users = 'risabh.s';
@@ -10,27 +10,27 @@ exports.registerUser = (email, password, rapidID,userObject,usertype) =>
 
     new Promise((resolve, reject) => {
 
-        // const newUser = new user({
+        const newUser = new user({
 
          
-        //     email: email,
-        //     password: password,
-        //     rapidID: rapidID,
-        //     userObject:userObject,
-        //      usertype :usertype,
-        //     created_at: new Date(),
-        // });
-        // newUser.save()
+            email: email,
+            password: password,
+            rapidID: rapidID,
+            userObject:userObject,
+             usertype:usertype,
+            created_at: new Date(),
+        });
+        newUser.save()
 
-var newUser = {
+// var newUser = {
 
-    email: email,
-    password: password,
-    rapidID: rapidID,
-    userObject:userObject,
-     usertype:usertype,
-    created_at: new Date(),
-}
+//     email: email,
+//     password: password,
+//     rapidID: rapidID,
+//     userObject:userObject,
+//      usertype:usertype,
+//     created_at: new Date(),
+// }
 
              bcSdk.createUser({
                 UserDetails: newUser

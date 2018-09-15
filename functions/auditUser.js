@@ -4,6 +4,7 @@ var userss = "risabh.s";
 const doc = require('../models/doc');
 const user = require('../models/user');
 // const bcSdk = require('../src/blockchain/blockchain_sdk');
+var bcSdk = require('../fabcar/query');
 var ownsLedgerData = [];
 var docArray = [];
 
@@ -13,14 +14,14 @@ exports.auditUser = (rapidID) => {
     return new Promise((resolve, reject) => {
 
         bcSdk.getMydocs({
-                user: userss,
+                
                 rapidID: rapidID
             })
 
 
 
             .then((userdocs) => {
-
+                console.log("userdocs",userdocs);
                 var AuditLedgerData = userdocs.body.audittrail
                 console.log(AuditLedgerData)
                  var orgkeys =Object.keys(AuditLedgerData)
@@ -31,6 +32,7 @@ exports.auditUser = (rapidID) => {
                         })
 
                         .then((users) => {
+                            console.log("users",users)
                             var orgnames = [];
                              var timestamps=[];
                              var rapiddocIDs =[];

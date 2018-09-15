@@ -6,31 +6,33 @@ var bcSdk = require('../fabcar/invoke');
 const users = 'risabh.s';
 
 
-exports.registerOrg = (orgname, email, orgcontact, pin, rapidID) =>
+exports.registerOrg = (orgname, email, orgcontact, password, rapidID,usertype) =>
 
     new Promise((resolve, reject) => {
 
         const newUser = new user({
 
-            orgname: orgname,
-            email: email,
-            orgcontact: orgcontact,
-            pin: pin,
-            rapidID: rapidID,
+            orgname:orgname,
+            email:email,
+            orgcontact:orgcontact,
+            password:password,
+            rapidID:rapidID,
+            usertype:usertype,
             created_at: new Date(),
         });
 
         newUser.save()
 
-            .then(() => resolve({
+           
+           bcSdk.createUser({
+                
+                UserDetails: newUser
+            })
+
+            .then((user) => resolve({
                 
                 status: 201,
                 message: 'User Registered Sucessfully !'
-            }))
-
-            .then(() => bcSdk.createUser({
-                
-                UserDetails: newUser
             }))
 
             .catch(err => {

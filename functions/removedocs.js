@@ -1,6 +1,7 @@
 'use strict';
 
 // var bcSdk = require('../src/blockchain/blockchain_sdk');
+var bcSdk = require('../fabcar/invoke');
 const user = 'risabh.s';
 const doc = require('../models/doc');
 
@@ -15,7 +16,7 @@ exports.removedocs = (rapidID, rapid_doc_ID) =>
         });
 
         bcSdk.removedocs({
-                user: user,
+               
                 deleteDocs: deleteDocs
             })
                doc.deleteMany({"rapid_doc_ID" : rapid_doc_ID})     
